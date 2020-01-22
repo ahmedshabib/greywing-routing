@@ -1,0 +1,19 @@
+# Compiled class file
+searoute/*.class
+
+# Log file
+searoute/*.log
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+searoute/hs_err_pid*
+
+searoute/target/
+searoute/.settings/
+searoute/.classpath
+searoute/.project
+
+docker/data
+docker/README.md
+.DS_Store
+
+maven/
