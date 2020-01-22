@@ -18,4 +18,4 @@ The same route with non-IRTC routes enabled: [http://localhost:8080/searoute.htm
 
 ## Note
 
-The IRTC detection is implemented in software, and is only tested to work for the default (20km) resolution. Forks and pull requests are welcome!
+The IRTC detection is implemented in software, and is only tested to work for the 5km resolution (set using the `res` parameter, see the test urls). Forks and pull requests are welcome!
