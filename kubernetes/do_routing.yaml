@@ -1,0 +1,74 @@
+---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: routing
+  spec:
+    replicas: 10
+    minReadySeconds: 5
+    strategy:
+      rollingUpdate:
+        maxSurge: 3
+        maxUnavailable: 0
+    selector:
+      matchLabels:
+        app: routing
+    template:
+      metadata:
+        labels:
+          app: routing
+      spec:
+        containers:
+          - image: registry.digitalocean.com/greywing-cr/greywing-routing:v1
+            name: routing
+            resources:
+              requests:
+                cpu: 250m
+                # memory: 100Mi
+              limits:
+                cpu: 1000m
+                # memory: 200Mi
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 30
+            ports:
+              - containerPort: 8080
+                name: routing
+                protocol: TCP
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: routing-loadbalancer
+    annotations:
+      service.beta.kubernetes.io/do-loadbalancer-size-slug: "lb-small"
+      service.beta.kubernetes.io/do-loadbalancer-name: "routing-loadbalancer"
+  spec:
+    type: LoadBalancer
+    ports:
+      - port: 80
+        targetPort: routing
+    selector:
+      app: routing
+---
+  apiVersion: autoscaling/v1
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: routing-hpa
+  spec:
+    maxReplicas: 10
+    minReplicas: 5
+    scaleTargetRef:
+      apiVersion: apps/v1beta1
+      kind: Deployment
+      name: routing
+    targetCPUUtilizationPercentage: 50

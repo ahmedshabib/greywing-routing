@@ -1,0 +1,84 @@
+---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: routing
+  spec:
+    replicas: 10
+    minReadySeconds: 5
+    strategy:
+      rollingUpdate:
+        maxSurge: 3
+        maxUnavailable: 0
+    selector:
+      matchLabels:
+        app: routing
+    template:
+      metadata:
+        labels:
+          app: routing
+      spec:
+        containers:
+          - image: 645147910530.dkr.ecr.us-east-1.amazonaws.com/greywing-routing:v1
+            name: routing
+            resources:
+              requests:
+                cpu: 500m
+                # memory: 100Mi
+              limits:
+                cpu: 2000m
+                # memory: 200Mi
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 30
+            ports:
+              - containerPort: 8080
+                name: routing
+                protocol: TCP
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: routing-loadbalancer
+  spec:
+    type: LoadBalancer
+    ports:
+      - port: 80
+        targetPort: routing
+    selector:
+      app: routing
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: routing-nginx
+  spec:
+    type: LoadBalancer
+    selector:
+      app: routing
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 8080
+---
+  apiVersion: autoscaling/v1
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: routing-hpa
+  spec:
+    maxReplicas: 25
+    minReplicas: 10
+    scaleTargetRef:
+      apiVersion: extensions/v1beta1
+      kind: Deployment
+      name: routing
+    targetCPUUtilizationPercentage: 20
